@@ -12,24 +12,27 @@ std::string get_str_id() {
 }
 
 
-class thread_guard {
-	std::thread& t;
+class scoped_thread {
+private:
+	std::thread t;
 
 public:
-	explicit thread_guard(std::thread& t_): t(t_) {}
-
-
-	//the guarded thread will be waited 
-	~thread_guard() {
-		if(t.joinable()) {
-			t.join();
+	explicit scoped_thread(std::thread t_):
+		t(std::move(t_)) {
+		if(!t.joinable()) {
+			throw std::logic_error("No thread");
 		}
 	}
 
+	~scoped_thread() {
+		t.join();
+	}
+
 	//not allowed to be copied or assigned
-	thread_guard(thread_guard const&) = delete;
-	thread_guard& operator=(thread_guard const&) = delete;
+	scoped_thread(scoped_thread const&) = delete;
+	scoped_thread& operator=(scoped_thread const&) = delete;
 };
+
 
 class worker {
 public:
@@ -48,16 +51,13 @@ public:
 
 
 int main() {
-
 	std::cout<<get_str_id()<<"Main thread "<<std::endl;
 
 	worker w1;
-	std::thread t1(w1, std::string("thread 1"));
-	thread_guard g1(t1);
+	scoped_thread t1(std::thread(w1, std::string("thread A")));
 
 	worker w2;
-	std::thread t2(w1, std::string("thread 2"));
-	thread_guard g2(t2);
+	scoped_thread t2(std::thread(w2, std::string("thread A")));
 
 	std::cout<<"main ended"<<std::endl;
 
