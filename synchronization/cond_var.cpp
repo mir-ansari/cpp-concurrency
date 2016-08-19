@@ -20,6 +20,7 @@ void calculateFactorial() {
     // now the mutex will unlocked and the thread will be blocked
     // once the predicate is true, the thread will be unbloked
     // after that mutex will be locked
+    // predicate is a lambda function, mostly checks a condition
     condVar.wait(lk, []{ return ready;});
 
     std::cout << "Worker working on data.." << std::endl;
